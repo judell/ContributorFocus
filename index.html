@@ -1,0 +1,103 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://jonudell.info/hlib/hlib.css">
+<style>
+body {
+  margin-top: .25in;
+}
+#formContainer {
+  display: flex;
+  flex-direction: column;
+  }
+</style>
+</head>
+<body>
+
+<div class="help">
+    <h1>Hypothesis Contributor Focus</h1>
+    <p>To review contributions to a group, enter your API token, pick a group and click Search. 
+      
+    <p>You'll get a list of URLs annotated by group members. 
+      
+    <p>For each URL, you'll get a list of group members who have annotated it. 
+        
+    <p>Click each member's name to launch the Hypothesis client in a mode that focuses on that member's 
+      annotations and replies for the URL. 
+      
+    <p>Note: You'll need to establish the selected group as the sticky default in the Hypothesis client.
+  </div>
+    
+  <div id="formContainer">
+    <div class="formField" id="groupContainer"></div>
+    <div class="formField" id="tokenContainer"></div>
+    <div class="formField">
+      <button onclick="search()">search</button>
+    </div>
+</div>
+
+  
+<div id="viewer"></div>
+
+<script src="https://jonudell.info/hlib/hlib.bundle.js"></script>
+
+<script>
+
+function search() {
+  hlib.getById('viewer').innerHTML = ''
+  let params = {
+    group: hlib.getSelectedGroup(),
+  }
+  hlib.hApiSearch(params, processSearchResults)
+}
+
+function processSearchResults(annos, replies) {
+  let rows = annos.concat(replies)
+  let urls = {}
+  let titles = {}
+  rows.forEach(row => {
+    let anno = hlib.parseAnnotation(row)
+    if (! titles[anno.url]) {
+      titles[anno.url] = anno.title
+    }
+    let users = urls[anno.url]
+    if (users) {
+      if (users.indexOf(anno.user) == -1) {
+        users.push(anno.user)
+        urls[anno.url] = users
+      }
+    } 
+    else {
+      urls[anno.url] = [anno.user]
+    }
+  })
+  Object.keys(urls).forEach(url => {
+    let html = `<p>${titles[url]}: `
+    let users = urls[url]
+    let userLinks = []
+    users.forEach(user => {
+      let userLink = `<a target="_contributor" href="${url}#annotations:query:user:${user}">${user}</a>`
+      userLinks.push(userLink)  
+    })
+    html += userLinks.join(', ')    
+    html += '</p>'
+    appendViewer(html)
+  })
+}
+
+function appendViewer(html) {
+  hlib.getById('viewer').innerHTML += html
+}
+
+var tokenContainer = hlib.getById('tokenContainer');
+hlib.createApiTokenInputForm(tokenContainer);
+
+var groupContainer = hlib.getById('groupContainer');
+hlib.createGroupInputForm(groupContainer);
+
+var maxContainer = hlib.getById('maxContainer');
+hlib.createFacetInputForm(maxContainer, 'max', 'max annotations to fetch');
+
+</script>  
+
+</body>
+</html>
