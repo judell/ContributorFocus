@@ -8,96 +8,65 @@ body {
 #formContainer {
   display: flex;
   flex-direction: column;
-  }
+}
+.emphasis {
+  color:blue;
+}
+#progress {
+  font-size: x-large;
+}
 </style>
 </head>
 <body>
 
-<div class="help">
-    <h1>Hypothesis Contributor Focus</h1>
-    <p>To review contributions to a group, enter your API token, pick a group and click Search. 
-      
-    <p>You'll get a list of URLs annotated by group members. 
-      
-    <p>For each URL, you'll get a list of group members who have annotated it. 
-        
-    <p>Click each member's name to launch the Hypothesis client in a mode that focuses on that member's 
-      annotations and replies for the URL. 
-      
-    <p>Note: You'll need to establish the selected group as the sticky default in the Hypothesis client.
-  </div>
+<h1>Hypothesis Contributor Focus</h1>
     
   <div id="formContainer">
     <div class="formField" id="groupContainer"></div>
     <div class="formField" id="tokenContainer"></div>
+    <div class="formField" id="urlContainer"></div>
+    <div class="formField" id="maxContainer"></div>
     <div class="formField">
       <button onclick="search()">search</button>
+      <span class="emphasis" id="progress"></span>
     </div>
 </div>
 
   
 <div id="viewer"></div>
 
-<script src="https://jonudell.info/hlib/hlib.bundle.js"></script>
+<div class="help">
+  <hr>
+  <h2>About this tool</h2>
+  <p>
+  The Hypothesis client supports a query syntax that filters the cards displayed in the sidebar. For a given URL, e.g. <span class="emphasis">http://example.com</span>, you can 
+  focus on threads involving a particular user, e.g. <span class="emphasis">Jane</span>, like so:
+  <span class="emphasis">https://example.com</span>#annotations:query:user:<span class="emphasis">Jane</span>. This tool automates the construction of those links. 
+  </p>
+
+  <p>
+  To focus on users contributing to discussion on a particular URL, specify the URL. If the annotations are not in Public, also choose the group. Then 
+  click <i>search</i> to produce a per-user link for each user who has annotated the selected URL in the selected group. Click each user's name to 
+  launch the Hypothesis client in a mode that focuses on threads involving that user.
+  </p>
+  
+  <p>
+  If the group you choose isn't the sticky default in the Hypothesis client, you'll need to make it so. If you specify a group other than Public, you'll 
+  need to provide your API token to read from that group. If you don't specify a URL, the tool provides per-user links for all URLs annotated in the group.
+  </p>
+</div>  
+
+<script src="https://jonudell.info/hlib/hlib2.bundle.js"></script>
+<script src="./index.js"></script>
 
 <script>
-
-function search() {
-  hlib.getById('viewer').innerHTML = ''
-  let params = {
-    group: hlib.getSelectedGroup(),
-  }
-  hlib.hApiSearch(params, processSearchResults)
-}
-
-function processSearchResults(annos, replies) {
-  let rows = annos.concat(replies)
-  let urls = {}
-  let titles = {}
-  rows.forEach(row => {
-    let anno = hlib.parseAnnotation(row)
-    if (! titles[anno.url]) {
-      titles[anno.url] = anno.title
+  setTimeout(_ => {
+    let token = hlib.getToken()
+    if (token) {
+      hlib.getById('tokenContainer').style.display = 'none'
     }
-    let users = urls[anno.url]
-    if (users) {
-      if (users.indexOf(anno.user) == -1) {
-        users.push(anno.user)
-        urls[anno.url] = users
-      }
-    } 
-    else {
-      urls[anno.url] = [anno.user]
-    }
-  })
-  Object.keys(urls).forEach(url => {
-    let html = `<p>${titles[url]}: `
-    let users = urls[url]
-    let userLinks = []
-    users.forEach(user => {
-      let userLink = `<a target="_contributor" href="${url}#annotations:query:user:${user}">${user}</a>`
-      userLinks.push(userLink)  
-    })
-    html += userLinks.join(', ')    
-    html += '</p>'
-    appendViewer(html)
-  })
-}
-
-function appendViewer(html) {
-  hlib.getById('viewer').innerHTML += html
-}
-
-var tokenContainer = hlib.getById('tokenContainer');
-hlib.createApiTokenInputForm(tokenContainer);
-
-var groupContainer = hlib.getById('groupContainer');
-hlib.createGroupInputForm(groupContainer);
-
-var maxContainer = hlib.getById('maxContainer');
-hlib.createFacetInputForm(maxContainer, 'max', 'max annotations to fetch');
-
-</script>  
+  }, 500)
+</script>
 
 </body>
 </html>
